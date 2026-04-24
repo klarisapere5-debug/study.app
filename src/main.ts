@@ -1,223 +1,116 @@
-import "./style.css";
-
-type Priority = "High" | "Medium" | "Low";
-type FilterType = "All" | "Pending" | "Completed";
+import './style.css'
 
 type Task = {
-  id: number;
-  text: string;
-  dueDate: string;
-  completed: boolean;
-  priority: Priority;
-};
-
-const app = document.querySelector<HTMLDivElement>("#app");
-
-if (!app) {
-  throw new Error("App container not found");
+  id: number
+  title: string
+  dueDate: string
+  priority: string
+  completed: boolean
 }
 
-let tasks: Task[] = JSON.parse(localStorage.getItem("studyapp-tasks") || "[]");
-let currentFilter: FilterType = "All";
-let editingTaskId: number | null = null;
+let tasks: Task[] = [
+  { id: 1, title: 'Finish math homework', dueDate: '2026-04-25', priority: 'High', completed: false },
+  { id: 2, title: 'Study for CS quiz', dueDate: '2026-04-26', priority: 'Medium', completed: false },
+  { id: 3, title: 'Submit English assignment', dueDate: '2026-04-24', priority: 'High', completed: true }
+]
 
-const saveTasks = () => {
-  localStorage.setItem("studyapp-tasks", JSON.stringify(tasks));
-};
+const app = document.querySelector<HTMLDivElement>('#app')!
 
-const formatDate = (date: string) => {
-  if (!date) return "No due date";
-  const formatted = new Date(date + "T00:00:00");
-  return formatted.toLocaleDateString();
-};
-
-const getFilteredTasks = () => {
-  if (currentFilter === "Pending") {
-    return tasks.filter((task) => !task.completed);
-  }
-
-  if (currentFilter === "Completed") {
-    return tasks.filter((task) => task.completed);
-  }
-
-  return tasks;
-};
-
-const getPriorityClass = (priority: Priority) => {
-  return priority.toLowerCase();
-};
-
-const renderApp = () => {
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((task) => task.completed).length;
-  const pendingTasks = totalTasks - completedTasks;
-  const filteredTasks = getFilteredTasks();
+function render() {
+  const total = tasks.length
+  const pending = tasks.filter(task => !task.completed).length
+  const completed = tasks.filter(task => task.completed).length
 
   app.innerHTML = `
-    <div class="app">
-      <div class="container">
+    <main class="app">
+      <section class="container">
         <header class="header">
           <h1>Study Planner Pro</h1>
-          <p class="subtitle">
-            Organize assignments, set priorities, track deadlines, and stay ahead of your goals.
-          </p>
+          <p>Organize assignments, set priorities, track deadlines, and stay ahead of your goals.</p>
         </header>
 
         <section class="stats">
-          <div class="stat-box total-card">
-            <h2>${totalTasks}</h2>
+          <div class="card total">
+            <h2>${total}</h2>
             <p>Total Tasks</p>
           </div>
-          <div class="stat-box pending-card">
-            <h2>${pendingTasks}</h2>
+          <div class="card pending">
+            <h2>${pending}</h2>
             <p>Pending</p>
           </div>
-          <div class="stat-box completed-card">
-            <h2>${completedTasks}</h2>
+          <div class="card completed">
+            <h2>${completed}</h2>
             <p>Completed</p>
           </div>
         </section>
 
-        <section class="task-form">
-          <input id="taskInput" type="text" placeholder="Enter a study task..." />
-          <input id="dateInput" type="date" />
-          <select id="priorityInput">
-            <option value="High">High Priority</option>
-            <option value="Medium" selected>Medium Priority</option>
+        <section class="form-section">
+          <input id="taskTitle" type="text" placeholder="Enter a study task..." />
+          <input id="dueDate" type="date" />
+          <select id="priority">
             <option value="Low">Low Priority</option>
+            <option value="Medium" selected>Medium Priority</option>
+            <option value="High">High Priority</option>
           </select>
-          <button id="addTaskBtn">Add Task</button>
-        </section>
-
-        <section class="filters">
-          <button class="filter-btn ${currentFilter === "All" ? "active-filter" : ""}" data-filter="All">All</button>
-          <button class="filter-btn ${currentFilter === "Pending" ? "active-filter" : ""}" data-filter="Pending">Pending</button>
-          <button class="filter-btn ${currentFilter === "Completed" ? "active-filter" : ""}" data-filter="Completed">Completed</button>
+          <button id="addTask">Add Task</button>
         </section>
 
         <section class="task-list">
-          ${
-            filteredTasks.length === 0
-              ? `<p class="empty-message">No tasks found for this filter.</p>`
-              : filteredTasks
-                  .map(
-                    (task) => `
-              <div class="task-card ${task.completed ? "completed" : ""}">
-                <div class="task-info">
-                  <div class="task-top-row">
-                    <h3>${task.text}</h3>
-                    <span class="priority-badge ${getPriorityClass(task.priority)}">${task.priority}</span>
-                  </div>
-                  <p>Due: ${formatDate(task.dueDate)}</p>
-                </div>
-
-                <div class="task-actions">
-                  <button class="complete-btn" data-id="${task.id}">
-                    ${task.completed ? "Undo" : "Complete"}
-                  </button>
-                  <button class="edit-btn" data-id="${task.id}">
-                    Edit
-                  </button>
-                  <button class="delete-btn" data-id="${task.id}">
-                    Delete
-                  </button>
-                </div>
+          ${tasks.map(task => `
+            <div class="task ${task.completed ? 'done' : ''}">
+              <div>
+                <h3>${task.title}</h3>
+                <p>Due: ${task.dueDate} | Priority: ${task.priority}</p>
               </div>
-            `
-                  )
-                  .join("")
-          }
+              <div class="actions">
+                <button onclick="toggleTask(${task.id})">${task.completed ? 'Undo' : 'Complete'}</button>
+                <button class="delete" onclick="deleteTask(${task.id})">Delete</button>
+              </div>
+            </div>
+          `).join('')}
         </section>
-      </div>
-    </div>
-  `;
+      </section>
+    </main>
+  `
 
-  const taskInput = document.querySelector<HTMLInputElement>("#taskInput");
-  const dateInput = document.querySelector<HTMLInputElement>("#dateInput");
-  const priorityInput = document.querySelector<HTMLSelectElement>("#priorityInput");
-  const addTaskBtn = document.querySelector<HTMLButtonElement>("#addTaskBtn");
+  document.querySelector<HTMLButtonElement>('#addTask')!.addEventListener('click', addTask)
+}
 
-  if (editingTaskId !== null) {
-    const taskToEdit = tasks.find((task) => task.id === editingTaskId);
+function addTask() {
+  const titleInput = document.querySelector<HTMLInputElement>('#taskTitle')!
+  const dueDateInput = document.querySelector<HTMLInputElement>('#dueDate')!
+  const priorityInput = document.querySelector<HTMLSelectElement>('#priority')!
 
-    if (taskToEdit && taskInput && dateInput && priorityInput && addTaskBtn) {
-      taskInput.value = taskToEdit.text;
-      dateInput.value = taskToEdit.dueDate;
-      priorityInput.value = taskToEdit.priority;
-      addTaskBtn.textContent = "Save Changes";
-    }
+  if (!titleInput.value.trim() || !dueDateInput.value) return
+
+  tasks.push({
+    id: Date.now(),
+    title: titleInput.value.trim(),
+    dueDate: dueDateInput.value,
+    priority: priorityInput.value,
+    completed: false
+  })
+
+  render()
+}
+
+window.toggleTask = (id: number) => {
+  tasks = tasks.map(task =>
+    task.id === id ? { ...task, completed: !task.completed } : task
+  )
+  render()
+}
+
+window.deleteTask = (id: number) => {
+  tasks = tasks.filter(task => task.id !== id)
+  render()
+}
+
+render()
+
+declare global {
+  interface Window {
+    toggleTask: (id: number) => void
+    deleteTask: (id: number) => void
   }
-
-  addTaskBtn?.addEventListener("click", () => {
-    const text = taskInput?.value.trim() || "";
-    const dueDate = dateInput?.value || "";
-    const priority = (priorityInput?.value as Priority) || "Medium";
-
-    if (!text) return;
-
-    if (editingTaskId !== null) {
-      tasks = tasks.map((task) =>
-        task.id === editingTaskId
-          ? { ...task, text, dueDate, priority }
-          : task
-      );
-
-      editingTaskId = null;
-    } else {
-      const newTask: Task = {
-        id: Date.now(),
-        text,
-        dueDate,
-        completed: false,
-        priority,
-      };
-
-      tasks.push(newTask);
-    }
-
-    saveTasks();
-    renderApp();
-  });
-
-  document.querySelectorAll<HTMLButtonElement>(".complete-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = Number(button.dataset.id);
-      tasks = tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      );
-      saveTasks();
-      renderApp();
-    });
-  });
-
-  document.querySelectorAll<HTMLButtonElement>(".delete-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = Number(button.dataset.id);
-      tasks = tasks.filter((task) => task.id !== id);
-
-      if (editingTaskId === id) {
-        editingTaskId = null;
-      }
-
-      saveTasks();
-      renderApp();
-    });
-  });
-
-  document.querySelectorAll<HTMLButtonElement>(".edit-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      const id = Number(button.dataset.id);
-      editingTaskId = id;
-      renderApp();
-    });
-  });
-
-  document.querySelectorAll<HTMLButtonElement>(".filter-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      currentFilter = button.dataset.filter as FilterType;
-      renderApp();
-    });
-  });
-};
-
-renderApp();
+}

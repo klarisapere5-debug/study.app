@@ -144,6 +144,7 @@ button:hover {
 .actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .delete {
@@ -152,6 +153,13 @@ button:hover {
 
 .delete:hover {
   background: #dc2626;
+}
+
+.empty-message {
+  text-align: center;
+  color: #6b7280;
+  font-size: 18px;
+  padding: 20px;
 }
 
 @media (max-width: 800px) {

@@ -8,8 +8,8 @@ const firebaseConfig = {
   projectId: 'study-planner-pro-b2fb1',
   storageBucket: 'study-planner-pro-b2fb1.firebasestorage.app',
   messagingSenderId: '627611639960',
-  appId:'1:627611639960:web:afb8465edd864e73e270ed',',
-  measurementId: 'G-5DQSK8ZSN4',
+  appId: '1:627611639960:web:afb8465edd864e73e270ed',
+measurementId: 'G-5DQSK8ZSN4',
 }
 
 const app = initializeApp(firebaseConfig)
